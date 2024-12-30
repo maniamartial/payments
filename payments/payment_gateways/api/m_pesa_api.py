@@ -62,44 +62,140 @@ def get_mpesa_mode_of_payment(company):
             modes_of_payment.append(mode.mode_of_payment)
     return modes_of_payment
 
+# @frappe.whitelist(allow_guest=True)
+# def get_draft_mpesa(status, company, name, posting_date, transaid, mode_of_payment=None):
+#     draft_mpesa = frappe.get_all(
+#         "Mpesa C2B Payment Register",
+#         fields=[
+#             "name", "transid", "transamount", "full_name", "posting_date",
+#         ],
+#         order_by="posting_date desc",
+#     )
+#     frappe.response['message']=draft_mpesa
+    # return draft_mpesa
+# @frappe.whitelist()
+# def get_mpesa_draft_payments(
+#     company,
+#     mode_of_payment=None,
+#     mobile_no=None,
+#     full_name=None,
+#     payment_methods_list=None,
+# ):
+#     filters = {"company": company, "docstatus": 0}
+#     if mode_of_payment:
+#         filters["mode_of_payment"] = mode_of_payment
+#     if mobile_no:
+#         filters["msisdn"] = ["like", f"%{mobile_no}%"]
+#     if full_name:
+#         filters["full_name"] = ["like", f"%{full_name}%"]
+#     if payment_methods_list:
+#         filters["mode_of_payment"] = ["in", json.loads(payment_methods_list)]
 
-@frappe.whitelist()
-def get_mpesa_draft_payments(
-    company,
-    mode_of_payment=None,
-    mobile_no=None,
-    full_name=None,
-    payment_methods_list=None,
-):
-    filters = {"company": company, "docstatus": 0}
-    if mode_of_payment:
-        filters["mode_of_payment"] = mode_of_payment
-    if mobile_no:
-        filters["msisdn"] = ["like", f"%{mobile_no}%"]
-    if full_name:
-        filters["full_name"] = ["like", f"%{full_name}%"]
-    if payment_methods_list:
-        filters["mode_of_payment"] = ["in", json.loads(payment_methods_list)]
+#     payments = frappe.get_all(
+#         "Mpesa C2B Payment Register",
+#         filters=filters,
+#         fields=[
+#             "name",
+#             "transid",
+#             "msisdn as mobile_no",
+#             "full_name",
+#             "posting_date",
+#             "transamount as amount",
+#             "currency",
+#             "mode_of_payment",
+#             "company",
+#         ],
+#         order_by="posting_date desc",
+#     )
+#     return payments
 
+@frappe.whitelist(allow_guest=True)
+def get_mpesa_draft_payments(name, msisdn, transid, full_name, mode_of_payment, company):
+   
     payments = frappe.get_all(
         "Mpesa C2B Payment Register",
-        filters=filters,
+        filters={'docstatus':0},
         fields=[
             "name",
-            "transid",
-            "msisdn as mobile_no",
+            "company",
+            "msisdn",
             "full_name",
             "posting_date",
-            "transamount as amount",
-            "currency",
-            "mode_of_payment",
-            "company",
+            "transamount",
+           
         ],
         order_by="posting_date desc",
     )
+    frappe.response['message']=payments
+    return payments
+@frappe.whitelist(allow_guest=True)
+
+# def get_mpesa_draft_c2b_payments():
+   
+#     payments = frappe.get_all(
+#         "Mpesa C2B Payment Register",
+#         filters={'docstatus':0},
+#         fields=[
+#             "name",
+#             "company",
+#             "msisdn",
+#             "full_name",
+#             "posting_date",
+#             "posting_time",
+#             "transamount",
+           
+#         ],
+#         order_by="posting_date desc",
+#     )
+#     frappe.response['message']=payments
+#     return payments
+def get_mpesa_draft_c2b_payments(search_term):
+    fields = [
+        "name",
+        "company",
+        "msisdn",
+        "firstname",
+        "posting_date",
+        "posting_time",
+        "transamount",
+    ]
+
+    filters = {"docstatus": 0}
+
+    if search_term:
+        # payments_by_msisdn = frappe.get_all(
+        #     "Mpesa C2B Payment Register",
+        #     filters={"msisdn": ["like", f"%{search_term}%"], "docstatus": 0},
+        #     fields=fields,
+        # )
+        payments_by_full_name = frappe.get_all(
+            "Mpesa C2B Payment Register",
+            filters={"firstname": ["like", f"%{search_term}%"], "docstatus": 0},
+            fields=fields,
+        )
+
+        # Merge results from both queries
+        payments = payments_by_full_name
+        frappe.msgprint(str(payments))
+    else:
+        # If search_term or status is not provided, return all payments with the given status
+        payments = frappe.get_all(
+            "Mpesa C2B Payment Register", filters=filters, fields=fields
+        )
+
     return payments
 
 
+@frappe.whitelist(allow_guest=True)
+def get_draft_pos_invoice():
+    draft_pos_invoice = frappe.get_all(
+        "POS Invoice",
+        filters={"docstatus": 0, "is_pos": 1},
+        fields=["*"],
+        order_by="posting_date desc",
+    )
+    frappe.response['message']=draft_pos_invoice
+   
 @frappe.whitelist()
 def submit_mpesa_payment(mpesa_payment, customer):
     doc = frappe.get_doc("Mpesa C2B Payment Register", mpesa_payment)
